@@ -20,9 +20,10 @@
  */
 
 /*
- * Modified in 2023 by Mistyhands <mistyhands@pm.me>
+ * Modified in 2023 by prayerie <prayerie@icloud.com>
  * - copy hex to clipboard with "-c" argument
  * - always use oneshot, and always cancel after keypress
+ * - don't prepend '#' to hex with "-n" argument
  */
 #include <X11/cursorfont.h>
 #include <X11/Xutil.h>
@@ -37,6 +38,7 @@ int main(int argc, char *argv[]) {
     int opt;
     int output_format = 0x11;
     int to_clipboard = 0;
+    int no_octothorpe = 0;
     
     static struct option long_options[] = {
         {"one-shot", no_argument, NULL, 'o'},
@@ -44,10 +46,11 @@ int main(int argc, char *argv[]) {
         {"help", no_argument, NULL, 'h'},
         {"rgb", no_argument, NULL, 'r'},
         {"hex", no_argument, NULL, 'd'},
-        {"clipboard", no_argument, NULL, 'c'}
+        {"clipboard", no_argument, NULL, 'c'},
+        {"no-octothorpe", no_argument, NULL, 'n'}
     };
     
-    while ((opt = getopt_long(argc, argv, "oqhrdc", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "oqhrdcn", long_options, NULL)) != -1) {
         switch(opt) {
             case 'r':
                 output_format &= 0x1;
@@ -58,12 +61,15 @@ int main(int argc, char *argv[]) {
             case 'c':
                 to_clipboard = 1;
                 break;
+            case 'n':
+                no_octothorpe = 1;
             case 'h':
                 printf( "colorpicker [options]\n"
                         "  -h, --help:             show this help\n"
                         "  -o, --one-shot:         one shot\n"
                         "  -q, --quit-on-keypress: quit on keypress\n"
                         "  -d, --hex:              hex only\n"
+                        "  -n, --no-octothorpe     don't prepend '#' to hex"
                         "  -r, --rgb:              rgb only\n"
                         "  -c, --clipboard:        copy color to clipboard instead of stdout\n");
                 return 0;
@@ -95,7 +101,7 @@ int main(int argc, char *argv[]) {
                     sprintf(color, "%d,%d,%d", (pixel >> 0x10) & 0xFF, (pixel >> 0x08) & 0xFF, pixel & 0xFF);
                 }
                 if (output_format & 0x10) {
-                    sprintf(color, "#%06X", pixel);
+                    sprintf(color, no_octothorpe ? "%06X" : "#%06X", pixel);
                 }
                 if (to_clipboard) {
                     sprintf(command, "echo -n '%s'| xclip -selection clipboard", color);
